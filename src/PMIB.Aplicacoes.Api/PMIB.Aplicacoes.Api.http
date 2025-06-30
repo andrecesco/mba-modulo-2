@@ -1,0 +1,6 @@
+@PMIB.Aplicacoes.Api_HostAddress = http://localhost:5020
+
+GET {{PMIB.Aplicacoes.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
