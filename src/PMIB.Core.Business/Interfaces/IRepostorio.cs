@@ -11,4 +11,5 @@ public interface IRepository<TEntity> : IDisposable where TEntity : Entity
     Task Adicionar(TEntity entity);
     Task Atualizar(TEntity entity);
     Task Remover(Guid id);
+    void Dispose();
 }

@@ -1,4 +1,5 @@
 using PMIB.Aplicacoes.Api.Configurations;
+using PMIB.Aplicacoes.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 

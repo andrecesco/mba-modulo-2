@@ -52,11 +52,11 @@ public abstract class Repositorio<TEntity> : IRepository<TEntity> where TEntity 
 
     private async Task<int> SaveChanges()
     {
-        return await context.SaveChangesAsync();
+        return await Db.SaveChangesAsync();
     }
 
     public void Dispose()
     {
-        context?.Dispose();
+        Db?.Dispose();
     }
 }

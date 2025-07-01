@@ -1,41 +1,38 @@
-using FluentValidation.Results;
+using AutoMapper;
+using PMIB.Core.Business.Dtos;
 using PMIB.Core.Business.Interfaces;
 using PMIB.Core.Business.Models;
-using PMIB.Core.Business.Notifications;
 using PMIB.Core.Business.Requests;
 
 namespace PMIB.Core.Business.Services;
 
-public class CategoriaService : BaseService, ICategoriaService
+public class CategoriaService(
+    INotificador notificador,
+    ICategoriaRepositorio categoriaRepository,
+    IProdutoRepositorio produtoRepositorio,
+    IMapper mapper) : BaseService(notificador), ICategoriaService
 {
-    private readonly ICategoriaRepositorio _categoriaRepository;
-
-    public CategoriaService(
-        INotificador notificador,
-        ICategoriaRepositorio categoriaRepository) : base(notificador)
+    public async Task<CategoriaDto> ObterPorId(Guid id)
     {
-        _categoriaRepository = categoriaRepository;
+        var model = await categoriaRepository.ObterPorId(id);
+        return model == null ? null : mapper.Map<CategoriaDto>(model);
     }
 
-    public async Task<Categoria> ObterPorId(Guid id)
+    public async Task<IEnumerable<CategoriaDto>> ObterTodos()
     {
-        return await _categoriaRepository.ObterPorId(id);
-    }
-
-    public async Task<IEnumerable<Categoria>> ObterTodos()
-    {
-        return await _categoriaRepository.ObterTodos();
+        var models = await categoriaRepository.ObterTodos();
+        return models.Select(mapper.Map<CategoriaDto>);
     }
 
     public async Task<Categoria> Adicionar(CategoriaRequest request)
     {
         if (!request.IsValid()) 
         {
-            NotificarErrosValidacao(request.ValidationResult);
+            Notificar(request.ValidationResult);
             return null;
         }
 
-        if (await _categoriaRepository.Buscar(c => c.Nome == request.Nome).Result.AnyAsync())
+        if ((await categoriaRepository.Buscar(c => c.Nome == request.Nome)).FirstOrDefault() != null)
         {
             Notificar("Já existe uma categoria com este nome.");
             return null;
@@ -49,7 +46,7 @@ public class CategoriaService : BaseService, ICategoriaService
             Descricao = request.Descricao
         };
 
-        await _categoriaRepository.Adicionar(categoria);
+        await categoriaRepository.Adicionar(categoria);
         
         return categoria;
     }
@@ -58,18 +55,18 @@ public class CategoriaService : BaseService, ICategoriaService
     {
         if (!request.IsValid())
         {
-            NotificarErrosValidacao(request.ValidationResult);
+            Notificar(request.ValidationResult);
             return null;
         }
 
-        var categoriaAtualizacao = await _categoriaRepository.ObterPorId(id);
+        var categoriaAtualizacao = await categoriaRepository.ObterPorId(id);
         if (categoriaAtualizacao == null)
         {
             Notificar("Categoria não encontrada.");
             return null;
         }
 
-        if (await _categoriaRepository.Buscar(c => c.Nome == request.Nome && c.Id != id).Result.AnyAsync())
+        if ((await categoriaRepository.Buscar(c => c.Nome == request.Nome && c.Id != id)).FirstOrDefault() != null)
         {
             Notificar("Já existe uma categoria com este nome.");
             return null;
@@ -79,14 +76,14 @@ public class CategoriaService : BaseService, ICategoriaService
         categoriaAtualizacao.Nome = request.Nome;
         categoriaAtualizacao.Descricao = request.Descricao;
 
-        await _categoriaRepository.Atualizar(categoriaAtualizacao);
+        await categoriaRepository.Atualizar(categoriaAtualizacao);
         
         return categoriaAtualizacao;
     }
 
     public async Task<bool> Remover(Guid id)
     {
-        var categoria = await _categoriaRepository.ObterPorId(id);
+        var categoria = await categoriaRepository.ObterPorId(id);
         if (categoria == null)
         {
             Notificar("Categoria não encontrada.");
@@ -94,14 +91,14 @@ public class CategoriaService : BaseService, ICategoriaService
         }
 
         // Verificar se existem produtos vinculados a esta categoria
-        var produtos = await _categoriaRepository.ObterProdutosPorCategoria(id);
-        if (produtos != null && produtos.Any())
+        var produtos = await produtoRepositorio.ObterPorCategoriaId(id);
+        if (produtos != null && produtos.Count != 0)
         {
             Notificar("Esta categoria possui produtos vinculados e não pode ser removida.");
             return false;
         }
 
-        await _categoriaRepository.Remover(id);
+        await categoriaRepository.Remover(id);
         return true;
     }
 }

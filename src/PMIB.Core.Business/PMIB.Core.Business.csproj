@@ -9,11 +9,11 @@
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="11.11.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="2.3.0" />
+    <PackageReference Include="AutoMapper" Version="14.0.0" />
   </ItemGroup>
   
   <ItemGroup>
     <Folder Include="Validations\" />
-    <Folder Include="Services\" />
   </ItemGroup>
 
 </Project>
